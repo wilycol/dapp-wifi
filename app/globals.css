@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* No global colors; components decide their own colors */
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer components {
+  .form-input-dapp {
+    @apply w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-gray-50 focus:bg-white;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+}
