@@ -43,6 +43,7 @@ const clientSchema = z.object({
   ip_mac: z.string().optional(),
   monthly_amount: z.coerce.number().min(0),
   due_date: z.coerce.number().min(1).max(31),
+ 
   status: z.enum(['Activo', 'En Mora', 'Cortado']),
 });
 
@@ -91,16 +92,13 @@ export default function Dashboard() {
 
   const renderContent = () => {
     // Role-based access control
-    if (profile?.role === 'Tecnico' && (activeTab === 'dashboard' || activeTab === 'clients')) {
-      return <SupportView />; // Technicians only see support/maintenance
-    }
-    if (profile?.role === 'Cobros' && activeTab === 'installers') {
-      return <ReportsView />; // Billing operators don't see installers
+    if (profile?.role === 'Tecnico') {
+      return <SupportView />; 
     }
 
     switch (activeTab) {
       case 'dashboard': return <ReportsView />;
-      case 'clients': return <ClientsView />;
+      case 'clients': return <ClientsView role={profile?.role} />;
       case 'installers': return <InstallersView />;
       case 'support': return <SupportView />;
       default: return <ReportsView />;
@@ -127,7 +125,7 @@ export default function Dashboard() {
               icon={<LayoutDashboard size={20} />} 
               label="Dashboard" 
               active={activeTab === 'dashboard'} 
-              onClick={() =>d { setActiveTab('dashboard'); setIsSidebarOpen(false); }} 
+              onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }} 
             />
           )}
           {(profile?.role === 'Admin' || profile?.role === 'SuperAdmin' || profile?.role === 'Cobros') && (
@@ -154,7 +152,7 @@ export default function Dashboard() {
           />
         </nav>
 
-        <div className="p-4 border-t border-gray-200">
+        <div className="p- Ministers border-t border-gray-200">
           <div className="flex items-center gap-3 p-2 mb-2">
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
               {profile?.role?.[0] || 'U'}
@@ -192,13 +190,13 @@ export default function Dashboard() {
               <Bell size={20} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
-            {(profile?.role === 'Admin' || profile?.role === 'SuperAdmin') && (
+            {(profile?.role === 'Admin' || profile.role === 'SuperAdmin') && (
               <button 
                 onClick={() => setIsModalOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white p-2 lg:px-4 lg:py-2 rounded-lg flex items-center gap-2 transition-colors"
               >
                 <Plus size={18} />
-                <span className="hidden lg:inline">Nuevo Cliente</span>
+                <span className="hidden lgd lg:inline">Nuevo Cliente</span>
               </button>
             )}
           </div>
@@ -212,10 +210,10 @@ export default function Dashboard() {
 
       {isModalOpen && (
         <ClientModal 
+          companyId={profile?.company_id}
           onClose={() => setIsModalOpen(false)} 
           onSuccess={() => {
             setIsModalOpen(false);
-            // We'll need a way to refresh the list, for now simple reload or state lift
             window.location.reload(); 
           }} 
         />
@@ -224,21 +222,21 @@ export default function Dashboard() {
   );
 }
 
-function NavItem({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) {
+const NavItem = ({ icon, label, active, onClick }: any) => {
+  const activeClass = active
+    ? 'bg-blue-50 text-blue-700'
+    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900';
+
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-        active 
-          ? 'bg-blue-50 text-blue-600' 
-          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-      }`}
+      className={`flex items-center w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeClass}`}
     >
       {icon}
-      {label}
+      <span className="ml-3">{label}</span>
     </button>
   );
-}
+};
 
 function StatCard({ title, value, icon, color }: { title: string, value: string | number, icon: React.ReactNode, color: string }) {
   return (
@@ -269,7 +267,7 @@ function ReportsView() {
           if (c.status === 'Activo') acc.active++;
           if (c.status === 'En Mora') acc.mora++;
           if (c.status === 'Cortado') acc.cut++;
-          if (c.status === 'Activo') Plan') acc.revenue += Number(c.monthly_amount || 0);
+          if (c.status === 'Activo') acc.revenue += Number(c.monthly_amount || 0);
           return acc;
         }, { active: 0, mora: 0, cut: 0, revenue: 0 });
         setStats(s);
@@ -303,7 +301,7 @@ function ReportsView() {
   );
 }
 
-function ClientsView() {
+function ClientsView({ role }: { role: string }) {
   const [clients, setClients] = useState<Tables<'clients'>[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -315,7 +313,7 @@ function ClientsView() {
 
   async function fetchClients() {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('clients')
       .select('*')
       .order('created_at', { ascending: false });
@@ -323,19 +321,6 @@ function ClientsView() {
     if (data) setClients(data);
     setLoading(false);
   }
-
-  async function handleQuickMessage(clientId: string, name: string) {
-    setIsSending(clientId);
-    const result = await sendClientNotification(clientId, `Hola ${name}, gracias por preferir nuestro servicio de WiFi. ¿En qué podemos ayudarte hoy?`);
-    if (result.success) {
-      alert(`Mensaje enviado a ${name}`);
-    }
-    setIsSending(null);
-  }
-
-  const openInMaps = (address: string) => {
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
-  };
 
   const filteredClients = clients.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -346,83 +331,69 @@ function ClientsView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="relative w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Buscar clientes..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
+      <div className="relative w-full max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+        <input 
+          type="text"
+          placeholder="Buscar cliente por nombre o dirección..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+        />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[800px]">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente / Contrato</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">IP / MAC</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Monto / Corte</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredClients.length === 0 ? (
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No se encontraron clientes</td>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan / Monto</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
-            ) : (
-              filteredClients.map((client) => (
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredClients.map((client) => (
                 <tr key={client.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-medium text-gray-900">{client.name}</div>
-                    <div className="text-xs text-gray-500">Contrato: {client.contract_number || 'N/A'}</div>
+                    <div className="text-xs text-gray-500 flex items-center gap-1">
+                      <MapPin size={12} /> {client.address}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600 font-mono">{client.ip_mac || '---'}</td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      client.status === 'Activo' ? 'bg-green-100 text-green-800' : 
-                      client.status === 'En Mora' ? 'bg-yellow-100 text-yellow-800' : 
-                      'bg-red-100 text-red-800'
+                    <div className="text-sm font-medium">{client.plan}</div>
+                    <div className="text-xs text-blue-600">${client.monthly_amount} / mes</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      client.status === 'Activo' ? 'bg-green-100 text-green-700' :
+                      client.status === 'En Mora' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-red-100 text-red-700'
                     }`}>
                       {client.status}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">${Number(client.monthly_amount || 0).toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">Día de corte: {client.due_date || 5}</div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2">
                       <button 
-                        onClick={() => openInMaps(client.address)}
-                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Ver en Google Maps"
+                        onClick={() => window.open(`https://wa.me/${client.phone?.replace(/\D/g, '')}`, '_blank')}
+                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="WhatsApp"
                       >
-                        <MapPin size={18} />
+                        <MessageSquare size={18} />
                       </button>
-                      <button 
-                        onClick={() => handleQuickMessage(client.id, client.name)}
-                        disabled={isSending === client.id}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
-                        title="Enviar mensaje de bienvenida"
-                      >
-                        {isSending === client.id ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                      </button>
-                      <button className="text-gray-400 hover:text-gray-600">
+                      <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
                         <MoreVertical size={18} />
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -433,155 +404,103 @@ function InstallersView() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchInstallers();
+    async function fetch() {
+      const { data } = await supabase.from('installers').select('*');
+      if (data) setInstallers(data);
+      setLoading(false);
+    }
+    fetch();
   }, []);
-
-  async function fetchInstallers() {
-    setLoading(true);
-    const { data } = await supabase.from('installers').select('*');
-    if (data) setInstallers(data);
-    setLoading(false);
-  }
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-blue-600" /></div>;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {installers.length === 0 ? (
-        <div className="col-span-full text-center py-12 text-gray-500">No hay instaladores registrados</div>
-      ) : (
-        installers.map((installer) => (
-          <div key={installer.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                <Wrench size={24} />
-              </div>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                installer.status === 'Disponible' ? 'bg-green-100 text-green-800' : 
-                installer.status === 'En Ruta' ? 'bg-blue-100 text-blue-800' : 
-                'bg-gray-100 text-gray-800'
-              }`}>
-                {installer.status}
-              </span>
+      {installers.map(installer => (
+        <div key={installer.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
+              {installer.name[0]}
             </div>
-            <h3 className="text-lg font-semibold mb-1">{installer.name}</h3>
-            <p className="text-sm text-gray-500 mb-4">{installer.phone || 'Sin teléfono'}</p>
-            <button className="w-full py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-              Ver Perfil
-            </button>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              installer.status === 'Disponible' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+            }`}>
+              {installer.status}
+            </span>
           </div>
-        ))
-      )}
+          <h3 className="font-bold text-gray-900">{installer.name}</h3>
+          <p className="text-sm text-gray-500 mb-4">{installer.phone}</p>
+          <button className="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            Asignar Tarea
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
 
 function SupportView() {
-  const [tickets, setTickets] = useState<(Tables<'support_tickets'> & { clients: { name: string } | null })[]>([]);
+  const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTickets();
-  }, []);
-
-  async function fetchTickets() {
-    setLoading(true);
-    const { data } = await supabase
-      .from('support_tickets')
-      .select('*, clients(name)')
-      .order('created_at', { ascending: false });
-    
-    if (data) setTickets(data as any);
-    setLoading(false);
-  }
-
-  async function handleStatusUpdate(ticketId: string, currentStatus: string) {
-    setUpdatingId(ticketId);
-    const nextStatus = currentStatus === 'Abierto' ? 'En Proceso' : 'Cerrado';
-    
-    const { error } = await supabase
-      .from('support_tickets')
-      .update({ status: nextStatus as any })
-      .eq('id', ticketId);
-
-    if (!error) {
-      await notifyTicketUpdate(ticketId, nextStatus);
-      await fetchTickets();
+    async function fetch() {
+      const { data } = await supabase
+        .from('support_tickets')
+        .select('*, clients(name, address)')
+        .order('created_at', { ascending: false });
+      if (data) setTickets(data);
+      setLoading(false);
     }
-    setUpdatingId(null);
-  }
+    fetch();
+  }, []);
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-blue-600" /></div>;
 
   return (
     <div className="space-y-4">
-      {tickets.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">No hay tickets de soporte</div>
-      ) : (
-        tickets.map((ticket) => (
-          <div key={ticket.id} className="bg-white p-4 rounded-xl border border-gray-200 flex items-center justify-between hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-lg ${
-                ticket.status === 'Abierto' ? 'bg-red-50 text-red-600' : 
-                ticket.status === 'En Proceso' ? 'bg-yellow-50 text-yellow-600' : 
-                'bg-green-50 text-green-600'
-              }`}>
-                {ticket.status === 'Abierto' ? <AlertCircle size={24} /> : 
-                 ticket.status === 'En Proceso' ? <Clock size={24} /> : 
-                 <CheckCircle2 size={24} />}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-gray-400">#{ticket.id.slice(0, 8)}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                    ticket.priority === 'ebaAlta' ? 'bg-red-100 text-red-700' :
-                    ticket.priority === 'Media' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-blue-100 text-blue-700'
-                  }`}>
-                    {ticket.priority}
-                  </span>
-                </div>
-                <h4 className="font-semibold text-gray-900">{ticket.issue}</h4>
-                <p className="text-sm text-gray-500">{ticket.clients?.name || 'Cliente desconocido'}</p>
-              </div>
+      {tickets.map(ticket => (
+        <div key={ticket.id} className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`w-2 h-2 rounded-full ${
+                ticket.priority === 'Alta' ? 'bg-red-500' : ticket.priority === 'Media' ? 'bg-yellow-500' : 'bg-blue-500'
+              }`}></span>
+              <h4 className="font-bold text-gray-900">{ticket.issue}</h4>
             </div>
-            <div className="flex items-center gap-3">
-              {ticket.status !== 'Cerrado' && (
-                <button 
-                  onClick={() => handleStatusUpdate(ticket.id, ticket.status || 'Abierto')}
-                  disabled={updatingId === ticket.id}
-                  className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
-                >
-                  {updatingId === ticket.id && <Loader2 size={14} className="animate-spin" />}
-                  {ticket.status === 'Abierto' ? 'Iniciar Proceso' : 'Cerrar Ticket'}
-                </button>
-              )}
-              <button className="p-2 text-gray-400 hover:text-gray-600">
-                <MoreVertical size={18} />
-              </button>
-            </div>
+            <p className="text-sm text-gray-600">{ticket.clients?.name} - {ticket.clients?.address}</p>
           </div>
-        ))
-      )}
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-600">{ticket.status}</span>
+            <button className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <Send size={16} />
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function ClientModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
+function ClientModal({ onClose, onSuccess, companyId }: { onClose: () => void, onSuccess: () => void, companyId: string }) {
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       status: 'Activo',
       due_date: 5,
-      monthly_amount: 50000
+      monthly_amount: 30
     }
   });
 
   const onSubmit = async (data: ClientFormValues) => {
     setLoading(true);
-    const { error } = await supabase.from('clients').insert([data]);
+    // Insertamos el cliente con el company_id del usuario actual
+    const { error } = await supabase.from('clients').insert([{
+      ...data,
+      company_id: companyId
+    }]);
+    
     if (error) {
       alert('Error al guardar: ' + error.message);
     } else {
@@ -591,11 +510,13 @@ function ClientModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: (
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-auto shadow-2xl">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold">Registrar Nuevo Cliente</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
+          <h2 className="text-xl font-bold">Nuevo Cliente</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <X size={20} />
+          </button>
         </div>
         
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
@@ -603,43 +524,28 @@ function ClientModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: (
             <FormField label="Nombre Completo" error={errors.name?.message}>
               <input {...register('name')} className="form-input-dapp" placeholder="Ej: Juan Pérez" />
             </FormField>
-            
+            <FormField label="Teléfono (WhatsApp)" error={errors.phone?.message}>
+              <input {...register('phone')} className="form-input-dapp" placeholder="+504 9999-9999" />
+            </FormField>
+            <FormField label="Dirección Exacta" error={errors.address?.message}>
+              <input {...register('address')} className="form-input-dapp" placeholder="Barrio, Calle, Casa..." />
+            </FormField>
             <FormField label="Número de Contrato" error={errors.contract_number?.message}>
-              <input {...register('contract_number')} className="form-input-dapp" placeholder="Ej: CNT-001" />
+              <input {...register('contract_number')} className="form-input-dapp" placeholder="WIFI-2024-001" />
             </FormField>
-
-            <FormField label="Teléfono" error={errors.phone?.message}>
-              <input {...register('phone')} className="form-input-dapp" placeholder="+57 300..." />
-            </FormField>
-
-            <FormField label="Email (Opcional)" error={errors.email?.message}>
-              <input {...register('email')} className="form-input-dapp" placeholder="correo@ejemplo.com" />
-            </FormField>
-
-            <FormField label="Dirección" error={errors.address?.message}>
-              <input {...register('address')} className="form-input-dapp" placeholder="Calle 123 #45-67" />
-            </FormField>
-
-            <FormField label="IP / MAC" error={errors.ip_mac?.message}>
-              <input {...register('ip_mac')} className="form-input-dapp" placeholder="192.168.1.50" />
-            </FormField>
-
             <FormField label="Plan de Internet" error={errors.plan?.message}>
               <select {...register('plan')} className="form-input-dapp">
-                <option value="50 Mbps">50 Mbps Básico</option>
-                <option value="100 Mbps">100 Mbps Fibra</option>
-                <option value="300 Mbps">300 Mbps Pro</option>
+                <option value="50 Mbps Básico">50 Mbps Básico</option>
+                <option value="100 Mbps Fibra">100 Mbps Fibra</option>
+                <option value="200 Mbps Premium">200 Mbps Premium</option>
               </select>
             </FormField>
-
             <FormField label="Monto Mensual ($)" error={errors.monthly_amount?.message}>
               <input type="number" {...register('monthly_amount')} className="form-input-dapp" />
             </FormField>
-
-            <FormField label="Día de Corte" error={errors.due_date?.message}>
+            <FormField label="Día de Pago" error={errors.due_date?.message}>
               <input type="number" {...register('due_date')} className="form-input-dapp" min="1" max="31" />
             </FormField>
-
             <FormField label="Estado Inicial" error={errors.status?.message}>
               <select {...register('status')} className="form-input-dapp">
                 <option value="Activo">Activo</option>
@@ -650,18 +556,10 @@ function ClientModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: (
           </div>
 
           <div className="pt-4 flex gap-3">
-            <button 
-              type="button" 
-              onClick={onClose}
-              className="flex-1 py-3 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors"
-            >
+            <button type="button" onClick={onClose} className="flex-1 py-3 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors">
               Cancelar
             </button>
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
+            <button type="submit" disabled={loading} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
               {loading && <Loader2 size={18} className="animate-spin" />}
               Guardar Cliente
             </button>
@@ -672,12 +570,10 @@ function ClientModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: (
   );
 }
 
-function FormField({ label, children, error }: { label: string, children: React.ReactNode, error?: string }) {
-  return (
-    <div className="space-y-1">
-      <label className="text-sm font-semibold text-gray-700">{label}</label>
-      {children}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-    </div>
-  );
-}
+const FormField = ({ label, error, children }: any) => (
+  <div className="space-y-1">
+    <label className="block text-sm font-medium text-gray-700">{label}</label>
+    {children}
+    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+  </div>
+);
