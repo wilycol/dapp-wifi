@@ -62,6 +62,27 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          subscription_plan: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          subscription_plan?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          subscription_plan?: string | null
+        }
+        Relationships: []
+      }
       installers: {
         Row: {
           created_at: string | null
