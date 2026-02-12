@@ -2,33 +2,50 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next';
 import { Wifi, Loader2, Lock, Mail } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);fort); // Nuevo estado para alternar entre Login y Registro
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError('Credenciales inválidas. Por favor intenta de nuevo.');
-      setLoading(false);
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      } else {
+        alert('¡Registro exitoso! Por favor revisa tu correo para confirmar tu cuenta.');
+        setLoading(false);
+      }
     } else {
-      router.push('/');
-      router.refresh();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        setError('Credenciales inválidas. Por favor intenta de nuevo.');
+        setLoading(false);
+      } else {
+        router.push('/');
+        router.refresh();
+      }
     }
   };
 
@@ -40,13 +57,13 @@ export default function LoginPage() {
         </div>
         <h2 className="text-3xl font-extrabold text-gray-900">Dapp</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Administrador Portátil de Proveedores de Internet
+          {isSignUp ? 'Crea tu cuenta de administrador' : 'Administrador Portátil de Proveedores de Internet'}
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-gray-200">
-          <form className="space-y-6" onSubmit={handleLogin}>
+        <div classNamed className="bg-white py-8 px-4 shadow sm:rounded-xl sm:px-10 border border-gray-200">
+          <form className="space-y-6" onSubmit={handleAuth}>
             <div>
               <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
               <div className="mt-1 relative">
@@ -89,10 +106,19 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : 'Iniciar Sesión'}
+                {loading ? <Loader2 className="animate-spin" size={20} /> : (isSignUp ? 'Registrarse' : 'Iniciar Sesión')}
               </button>
             </div>
           </form>
+
+          <div className="mt-6">
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="w-full text-center text-sm text-blue-600 hover:text-blue-500 font-medium"
+            >
+              {isSignUp ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate aquí'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
