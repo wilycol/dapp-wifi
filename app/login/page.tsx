@@ -9,7 +9,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false); // Estado para alternar
+  const [isSignUp, setIsSignUp] = useState(false); // Corregido: eliminado el error de sintaxis
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
   const router = useRouter();
@@ -61,7 +61,7 @@ export default function LoginPage() {
         <div className="inline-flex items-center justify-center p-3 bg-blue-600 rounded-2xl shadow-lg mb-4">
           <Wifi className="text-white w-10 h-10" />
         </div>
-        <h2 className="text-3xl font-extrabold text-gray-900">Dapp</hfort>
+        <h2 className="text-3xl font-extrabold text-gray-900">Dapp</h2>
         <p className="mt-2 text-sm text-gray-600">
           {isSignUp ? 'Crea una nueva cuenta de administrador' : 'Administrador Portátil de Proveedores de Internet'}
         </p>
