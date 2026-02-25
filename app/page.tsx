@@ -30,6 +30,9 @@ import * as z from 'zod';
 import { createClient } from '@/lib/supabase/client';
 import { Tables } from '@/database.types';
 import { sendClientNotification, notifyTicketUpdate } from '@/app/actions/messaging';
+import { StatCard } from '@/components/ui/StatCard';
+import { Sidebar } from '@/components/dashboard/Sidebar';
+import { Header } from '@/components/dashboard/Header';
 
 const supabase = createClient();
 
@@ -108,99 +111,25 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-gray-50 text-gray-900 overflow-hidden">
       {/* Sidebar */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="p-6 flex items-center gap-2">
-          <div className="bg-blue-600 p-2 rounded-lg">
-            <Wifi className="text-white w-6 h-6" />
-          </div>
-          <span className="font-bold text-xl tracking-tight">WiFiManager</span>
-        </div>
-        
-        <nav className="flex-1 px-4 space-y-1">
-          {(profile?.role === 'Admin' || profile?.role === 'SuperAdmin' || profile?.role === 'Cobros') && (
-            <NavItem 
-              icon={<LayoutDashboard size={20} />} 
-              label="Dashboard" 
-              active={activeTab === 'dashboard'} 
-              onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }} 
-            />
-          )}
-          {(profile?.role === 'Admin' || profile?.role === 'SuperAdmin' || profile?.role === 'Cobros') && (
-            <NavItem 
-              icon={<Users size={20} />} 
-              label="Clientes" 
-              active={activeTab === 'clients'} 
-              onClick={() => { setActiveTab('clients'); setIsSidebarOpen(false); }} 
-            />
-          )}
-          {(profile?.role === 'Admin' || profile?.role === 'SuperAdmin') && (
-            <NavItem 
-              icon={<Wrench size={20} />} 
-              label="Instaladores" 
-              active={activeTab === 'installers'} 
-              onClick={() => { setActiveTab('installers'); setIsSidebarOpen(false); }} 
-            />
-          )}
-          <NavItem 
-            icon={<MessageSquare size={20} />} 
-            label="Soporte" 
-            active={activeTab === 'support'} 
-            onClick={() => { setActiveTab('support'); setIsSidebarOpen(false); }} 
-          />
-        </nav>
-
-        <div className="p- Ministers border-t border-gray-200">
-          <div className="flex items-center gap-3 p-2 mb-2">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold">
-              {profile?.role?.[0] || 'U'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{profile?.email?.split('@')[0]}</p>
-              <p className="text-xs text-gray-500 truncate">{profile?.role}</p>
-            </div>
-          </div>
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <LogOut size={18} />
-            Cerrar Sesión
-          </button>
-        </div>
-      </aside>
+      <Sidebar 
+        isSidebarOpen={isSidebarOpen}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        setIsSidebarOpen={setIsSidebarOpen}
+        profile={profile}
+        handleLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 shrink-0">
-          <div className="flex items-center gap-4">
-            <button 
-              className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            >
-              {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-            <h1 className="text-xl font-semibold capitalize">{activeTab}</h1>
-          </div>
-          <div className="flex items-center gap-2 lg:gap-4">
-            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative">
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-            {(profile?.role === 'Admin' || profile.role === 'SuperAdmin') && (
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white p-2 lg:px-4 lg:py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <Plus size={18} />
-                <span className="hidden lgd lg:inline">Nuevo Cliente</span>
-              </button>
-            )}
-          </div>
-        </header>
+        <Header 
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+          activeTab={activeTab}
+          profile={profile}
+          setIsModalOpen={setIsModalOpen}
+        />
 
         {/* View Content */}
         <div className="flex-1 overflow-auto p-4 lg:p-8">
@@ -218,34 +147,6 @@ export default function Dashboard() {
           }} 
         />
       )}
-    </div>
-  );
-}
-
-const NavItem = ({ icon, label, active, onClick }: any) => {
-  const activeClass = active
-    ? 'bg-blue-50 text-blue-700'
-    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900';
-
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeClass}`}
-    >
-      {icon}
-      <span className="ml-3">{label}</span>
-    </button>
-  );
-};
-
-function StatCard({ title, value, icon, color }: { title: string, value: string | number, icon: React.ReactNode, color: string }) {
-  return (
-    <div className={`p-6 rounded-xl border border-gray-200 ${color} flex items-center gap-4`}>
-      <div className="p-3 bg-white rounded-lg shadow-sm">{icon}</div>
-      <div>
-        <p className="text-sm text-gray-600 font-medium">{title}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-      </div>
     </div>
   );
 }

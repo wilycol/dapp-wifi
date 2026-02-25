@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next';
+import { useRouter } from 'next/navigation';
 import { Wifi, Loader2, Lock, Mail } from 'lucide-react';
 
 export default function LoginPage() {
