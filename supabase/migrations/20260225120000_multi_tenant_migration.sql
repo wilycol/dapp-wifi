@@ -4,7 +4,7 @@ BEGIN;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM companies WHERE name = 'Empresa Demo WiFi') THEN
-        INSERT INTO companies (name, subscription_plan) VALUES ('Empresa Demo WiFi', 'basic');
+        INSERT INTO companies (name, plan, slug, is_active) VALUES ('Empresa Demo WiFi', 'basic', 'empresa-demo-wifi', true);
     END IF;
 END $$;
 
