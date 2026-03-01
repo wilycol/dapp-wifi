@@ -1,14 +1,8 @@
-const { Client } = require('pg');
+const { createClient } = require('./db-client');
 const fs = require('fs');
 const path = require('path');
 
-// Connection string with Pooler (IPv4 compatible) as per previous context
-const connectionString = 'postgresql://postgres.whwtagguzgzbjirhtifi:FoR0niUgU6bS8ox6@aws-0-us-west-2.pooler.supabase.com:6543/postgres';
-
-const client = new Client({
-  connectionString: connectionString,
-  ssl: { rejectUnauthorized: false }
-});
+const client = createClient();
 
 async function checkAndApplyMigration() {
   try {

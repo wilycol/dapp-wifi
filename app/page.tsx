@@ -9,7 +9,6 @@ import {
   LayoutDashboard, 
   Plus, 
   Search, 
-  Wifi, 
   Bell,
   CheckCircle2,
   Clock,
@@ -109,7 +108,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden transition-colors">
       {/* Sidebar */}
       <Sidebar 
         isSidebarOpen={isSidebarOpen}

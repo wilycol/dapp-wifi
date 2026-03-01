@@ -1,9 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
 
-// Configuración (Hardcoded para la prueba, idealmente .env)
-const SUPABASE_URL = 'https://whwtagguzgzbjirhtifi.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indod3RhZ2d1emd6Ymppcmh0aWZpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjAyOTk0NiwiZXhwIjoyMDg3NjA1OTQ2fQ.HAcAUId1cmY0z9xLauhewt9RjFUeW9ADSS1wJ-UsNio';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indod3RhZ2d1emd6Ymppcmh0aWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMjk5NDYsImV4cCI6MjA4NzYwNTk0Nn0.Y_kuI3TTgiNdJussBfz-Ra0gayp7PaPfoaFd0xOu_Y8';
+// Configuración (Desde .env)
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !ANON_KEY) {
+  console.error('❌ Error: Faltan variables de entorno en .env.local');
+  process.exit(1);
+}
 
 // Cliente Admin (Service Role) para setup
 const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
