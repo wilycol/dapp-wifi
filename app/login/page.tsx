@@ -64,12 +64,13 @@ export default function LoginPage() {
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
-      });
-      if (error) throw error;
+      })
+      if (error) throw error
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión con Google');
+      console.error('Google login error:', err)
+      setError(err.message || 'Error al iniciar sesión con Google')
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
