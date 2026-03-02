@@ -24,7 +24,7 @@ export type Database = {
           id: string
           ip_mac: string | null
           monthly_amount: number | null
-          name: string
+          full_name: string
           phone: string | null
           plan: string
           status: Database["public"]["Enums"]["client_status"] | null
@@ -39,7 +39,7 @@ export type Database = {
           id?: string
           ip_mac?: string | null
           monthly_amount?: number | null
-          name: string
+          full_name: string
           phone?: string | null
           plan: string
           status?: Database["public"]["Enums"]["client_status"] | null
@@ -54,7 +54,7 @@ export type Database = {
           id?: string
           ip_mac?: string | null
           monthly_amount?: number | null
-          name?: string
+          full_name?: string
           phone?: string | null
           plan?: string
           status?: Database["public"]["Enums"]["client_status"] | null

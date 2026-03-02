@@ -39,7 +39,7 @@ export function Sidebar({
       </div>
       
       <nav className="flex-1 px-4 space-y-1">
-        {(profile?.role === 'Admin' || profile?.role === 'SuperAdmin' || profile?.role === 'Cobros') && (
+        {['admin', 'superadmin', 'cobros'].includes(profile?.role?.toLowerCase()) && (
           <NavItem 
             icon={<LayoutDashboard size={20} />} 
             label="Dashboard" 
@@ -47,7 +47,7 @@ export function Sidebar({
             onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }} 
           />
         )}
-        {(profile?.role === 'Admin' || profile?.role === 'SuperAdmin' || profile?.role === 'Cobros') && (
+        {['admin', 'superadmin', 'cobros'].includes(profile?.role?.toLowerCase()) && (
           <NavItem 
             icon={<Users size={20} />} 
             label="Clientes" 
@@ -55,7 +55,7 @@ export function Sidebar({
             onClick={() => { setActiveTab('clients'); setIsSidebarOpen(false); }} 
           />
         )}
-        {(profile?.role === 'Admin' || profile?.role === 'SuperAdmin') && (
+        {['admin', 'superadmin'].includes(profile?.role?.toLowerCase()) && (
           <NavItem 
             icon={<Wrench size={20} />} 
             label="Instaladores" 

@@ -8,6 +8,7 @@ async function checkCols() {
     FROM information_schema.columns 
     WHERE table_name = 'clients'
   `);
+  console.log('Columns in clients:');
   console.log(res.rows.map(r => r.column_name));
   await client.end();
 }

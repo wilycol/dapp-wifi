@@ -62,6 +62,37 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function checkUser() {
+      // --- MODO DESARROLLO: BYPASS LOGIN ---
+      // Si estamos en localhost y quieres saltar el login para ver el dashboard
+      // Cambia esta variable a true temporalmente
+      const isDevBypass = true; // CAMBIAR A false PARA PRODUCCION
+
+      if (isDevBypass && process.env.NODE_ENV === 'development') {
+        console.log('⚡ MODO DEV: Saltando Login con usuario Admin Real');
+        // Usamos el ID del perfil Admin encontrado en la BD
+        const adminUserId = '97807d28-5bca-475e-80f3-b7f40ed9f3c5';
+        const adminCompanyId = '470bd945-3e8f-426a-a8a3-64a1c15e1c35';
+        
+        setUser({ 
+          id: adminUserId, 
+          email: 'admin-test@example.com',
+          role: 'authenticated'
+        });
+        
+        setProfile({
+          id: adminUserId,
+          email: 'admin-test@example.com',
+          role: 'Admin',
+          company_id: adminCompanyId,
+          first_name: 'User A',
+          last_name: 'Test',
+          full_name: 'User A Test'
+        });
+        setLoading(false);
+        return;
+      }
+      // -------------------------------------
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push('/login');
@@ -75,10 +106,16 @@ export default function Dashboard() {
         .eq('id', user.id)
         .single();
       
-      setProfile(profile);
+      // Merge user email if not in profile (for display purposes)
+      const profileWithEmail = {
+        ...profile,
+        email: profile?.email || user.email
+      };
+      
+      setProfile(profileWithEmail);
 
       // Redirect to onboarding if no company_id and not superadmin
-      if (profile && !profile.company_id && profile.role !== 'superadmin') {
+      if (profileWithEmail && !profileWithEmail.company_id && profileWithEmail.role?.toLowerCase() !== 'superadmin') {
         router.push('/onboarding');
         return;
       }
@@ -101,7 +138,7 @@ export default function Dashboard() {
 
   const renderContent = () => {
     // Role-based access control
-    if (profile?.role === 'Tecnico') {
+    if (profile?.role?.toLowerCase() === 'tecnico') {
       return <SupportView />; 
     }
 
@@ -230,7 +267,7 @@ function ClientsView({ role }: { role: string }) {
   }
 
   const filteredClients = clients.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -264,7 +301,7 @@ function ClientsView({ role }: { role: string }) {
               {filteredClients.map((client) => (
                 <tr key={client.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{client.name}</div>
+                    <div className="font-medium text-gray-900">{client.full_name}</div>
                     <div className="text-xs text-gray-500 flex items-center gap-1">
                       <MapPin size={12} /> {client.address}
                     </div>
@@ -354,7 +391,7 @@ function SupportView() {
     async function fetch() {
       const { data } = await supabase
         .from('support_tickets')
-        .select('*, clients(name, address)')
+        .select('*, clients(full_name, address)')
         .order('created_at', { ascending: false });
       if (data) setTickets(data);
       setLoading(false);
@@ -373,9 +410,9 @@ function SupportView() {
               <span className={`w-2 h-2 rounded-full ${
                 ticket.priority === 'Alta' ? 'bg-red-500' : ticket.priority === 'Media' ? 'bg-yellow-500' : 'bg-blue-500'
               }`}></span>
-              <h4 className="font-bold text-gray-900">{ticket.issue}</h4>
+              <h4 className="font-bold text-gray-900">{ticket.title || ticket.issue || 'Sin Asunto'}</h4>
             </div>
-            <p className="text-sm text-gray-600">{ticket.clients?.name} - {ticket.clients?.address}</p>
+            <p className="text-sm text-gray-600">{ticket.clients?.full_name || 'Sin Cliente'} - {ticket.clients?.address}</p>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-600">{ticket.status}</span>
@@ -403,8 +440,10 @@ function ClientModal({ onClose, onSuccess, companyId }: { onClose: () => void, o
   const onSubmit = async (data: ClientFormValues) => {
     setLoading(true);
     // Insertamos el cliente con el company_id del usuario actual
+    const { name, ...rest } = data;
     const { error } = await supabase.from('clients').insert([{
-      ...data,
+      full_name: name,
+      ...rest,
       company_id: companyId
     }]);
     

@@ -366,6 +366,23 @@ export default function Onboarding() {
                 <input {...teamForm.register('collector_email')} className="form-input-dapp w-full" placeholder="cobrador@minegocio.com" />
               </div>
 
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                <button 
+                  type="button" 
+                  disabled 
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <Users size={16} />
+                  Añadir más empleados
+                </button>
+                <p className="mt-3 text-xs text-center text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md border border-amber-100 dark:border-amber-800/30">
+                  <span className="font-semibold block mb-1">Plan Free Limitado</span>
+                  Solo puedes registrar 1 Técnico y 1 Cobrador inicialmente.
+                  <br/>
+                  Actualiza a un plan <strong>Pro</strong> para gestionar equipos más grandes.
+                </p>
+              </div>
+
               <button type="submit" disabled={loading} className="w-full btn-primary flex justify-center items-center gap-2">
                 {loading && <Loader2 className="animate-spin" size={18} />}
                 Finalizar y Entrar
