@@ -7,11 +7,12 @@ async function fixRLSAndAddOwner() {
     await client.connect();
     console.log('🔌 Conectado a la base de datos...');
 
-    // 0. Agregar columna owner_id a companies
-    console.log('📦 Agregando columna owner_id a companies...');
+    // 0. Agregar columna owner_id y slug a companies
+    console.log('📦 Agregando columna owner_id y slug a companies...');
     await client.query(`
       ALTER TABLE companies 
-      ADD COLUMN IF NOT EXISTS owner_id uuid;
+      ADD COLUMN IF NOT EXISTS owner_id uuid,
+      ADD COLUMN IF NOT EXISTS slug text;
       
       -- Opcional: Agregar FK si users está en public, pero auth.users está en schema auth,
       -- normalmente no se hace FK estricta a auth.users desde public por permisos, pero es buena práctica.

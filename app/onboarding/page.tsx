@@ -122,7 +122,8 @@ export default function Onboarding() {
           currency: data.currency,
           logo_url: logoUrl,
           subscription_plan: 'Free', // Default plan
-          owner_id: user.id
+          owner_id: user.id,
+          slug: data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now() // Unique slug
         }])
         .select()
         .single();
