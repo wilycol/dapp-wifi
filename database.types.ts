@@ -68,20 +68,111 @@ export type Database = {
           id: string
           name: string
           subscription_plan: string | null
+          fiscal_id: string | null
+          address: string | null
+          phone: string | null
+          email: string | null
+          website: string | null
+          logo_url: string | null
+          currency: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
           subscription_plan?: string | null
+          fiscal_id?: string | null
+          address?: string | null
+          phone?: string | null
+          email?: string | null
+          website?: string | null
+          logo_url?: string | null
+          currency?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
           subscription_plan?: string | null
+          fiscal_id?: string | null
+          address?: string | null
+          phone?: string | null
+          email?: string | null
+          website?: string | null
+          logo_url?: string | null
+          currency?: string | null
         }
         Relationships: []
+      }
+      company_invites: {
+        Row: {
+          id: string
+          company_id: string
+          email: string
+          role: string
+          status: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          email: string
+          role: string
+          status?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          email?: string
+          role?: string
+          status?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      service_requests: {
+        Row: {
+          id: string
+          company_id: string
+          request_type: string
+          details: Json | null
+          status: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          request_type: string
+          details?: Json | null
+          status?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          request_type?: string
+          details?: Json | null
+          status?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       installers: {
         Row: {
@@ -116,18 +207,44 @@ export type Database = {
           email: string
           id: string
           role: string
+          company_id: string | null
         }
         Insert: {
           created_at?: string | null
           email: string
           id: string
           role: string
+          company_id?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string
           id?: string
           role?: string
+          company_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      processed_webhooks: {
+        Row: {
+          id: string
+          created_at: string
+        }
+        Insert: {
+          id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
         }
         Relationships: []
       }

@@ -76,6 +76,13 @@ export default function Dashboard() {
         .single();
       
       setProfile(profile);
+
+      // Redirect to onboarding if no company_id and not superadmin
+      if (profile && !profile.company_id && profile.role !== 'superadmin') {
+        router.push('/onboarding');
+        return;
+      }
+      
       setLoading(false);
     }
     checkUser();
@@ -385,7 +392,7 @@ function SupportView() {
 function ClientModal({ onClose, onSuccess, companyId }: { onClose: () => void, onSuccess: () => void, companyId: string }) {
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<ClientFormValues>({
-    resolver: zodResolver(clientSchema),
+    resolver: zodResolver(clientSchema) as any,
     defaultValues: {
       status: 'Activo',
       due_date: 5,

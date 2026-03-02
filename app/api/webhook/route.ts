@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { type Database } from '@/database.types';
 import { Paddle, EventName } from '@paddle/paddle-node-sdk';
 
 // =============================================================================
@@ -14,10 +15,10 @@ const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET_KEY;
 
 // Reutilización de Cliente Supabase (Singleton Pattern via Module Scope)
 // Usamos Service Role para operaciones privilegiadas (validar tenant, idempotencia)
-let supabaseAdmin: ReturnType<typeof createClient> | null = null;
+let supabaseAdmin: SupabaseClient<Database> | null = null;
 
 if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
-  supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  supabaseAdmin = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -29,7 +30,7 @@ if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
 let paddle: Paddle | null = null;
 
 if (PADDLE_API_KEY) {
-  paddle = new Paddle({ apiKey: PADDLE_API_KEY });
+  paddle = new Paddle(PADDLE_API_KEY);
 }
 
 // Constantes
