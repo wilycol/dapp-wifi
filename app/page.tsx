@@ -232,12 +232,12 @@ function ReportsView() {
         <StatCard title="Ingresos Estimados" value={`$${stats.revenue.toLocaleString()}`} icon={<DollarSign className="text-blue-600" />} color="bg-blue-50" />
       </div>
 
-      <div className="bg-white p-6 rounded-xl border border-gray-200">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-100">
           <TrendingUp size={20} className="text-blue-600" />
           Resumen de Operaciones
         </h3>
-        <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-100 rounded-lg text-gray-400">
+        <div className="h-64 flex items-center justify-center border-2 border-dashed border-gray-100 dark:border-gray-700 rounded-lg text-gray-400 dark:text-gray-500">
           [Gráfico de Crecimiento Mensual - Próxima Fase]
         </div>
       </div>
@@ -282,39 +282,39 @@ function ClientsView({ role }: { role: string }) {
           placeholder="Buscar cliente por nombre o dirección..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white transition-colors"
         />
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm transition-colors">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan / Monto</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cliente</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Plan / Monto</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {filteredClients.map((client) => (
-                <tr key={client.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={client.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{client.full_name}</div>
-                    <div className="text-xs text-gray-500 flex items-center gap-1">
+                    <div className="font-medium text-gray-900 dark:text-white">{client.full_name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                       <MapPin size={12} /> {client.address}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium">{client.plan}</div>
-                    <div className="text-xs text-blue-600">${client.monthly_amount} / mes</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-200">{client.plan}</div>
+                    <div className="text-xs text-blue-600 dark:text-blue-400">${client.monthly_amount} / mes</div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      client.status === 'Activo' ? 'bg-green-100 text-green-700' :
-                      client.status === 'En Mora' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
+                      client.status === 'Activo' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                      client.status === 'En Mora' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                      'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                     }`}>
                       {client.status}
                     </span>
@@ -323,12 +323,12 @@ function ClientsView({ role }: { role: string }) {
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={() => window.open(`https://wa.me/${client.phone?.replace(/\D/g, '')}`, '_blank')}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                         title="WhatsApp"
                       >
                         <MessageSquare size={18} />
                       </button>
-                      <button className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
+                      <button className="p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
                         <MoreVertical size={18} />
                       </button>
                     </div>
@@ -361,20 +361,20 @@ function InstallersView() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {installers.map(installer => (
-        <div key={installer.id} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div key={installer.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
           <div className="flex justify-between items-start mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-lg">
               {installer.name[0]}
             </div>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              installer.status === 'Disponible' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+              installer.status === 'Disponible' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
             }`}>
               {installer.status}
             </span>
           </div>
-          <h3 className="font-bold text-gray-900">{installer.name}</h3>
-          <p className="text-sm text-gray-500 mb-4">{installer.phone}</p>
-          <button className="w-full py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+          <h3 className="font-bold text-gray-900 dark:text-white">{installer.name}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{installer.phone}</p>
+          <button className="w-full py-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors">
             Asignar Tarea
           </button>
         </div>
@@ -404,18 +404,18 @@ function SupportView() {
   return (
     <div className="space-y-4">
       {tickets.map(ticket => (
-        <div key={ticket.id} className="bg-white p-4 rounded-xl border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div key={ticket.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className={`w-2 h-2 rounded-full ${
                 ticket.priority === 'Alta' ? 'bg-red-500' : ticket.priority === 'Media' ? 'bg-yellow-500' : 'bg-blue-500'
               }`}></span>
-              <h4 className="font-bold text-gray-900">{ticket.title || ticket.issue || 'Sin Asunto'}</h4>
+              <h4 className="font-bold text-gray-900 dark:text-white">{ticket.title || ticket.issue || 'Sin Asunto'}</h4>
             </div>
-            <p className="text-sm text-gray-600">{ticket.clients?.full_name || 'Sin Cliente'} - {ticket.clients?.address}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{ticket.clients?.full_name || 'Sin Cliente'} - {ticket.clients?.address}</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-600">{ticket.status}</span>
+            <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded transition-colors">{ticket.status}</span>
             <button className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
               <Send size={16} />
             </button>
@@ -457,10 +457,10 @@ function ClientModal({ onClose, onSuccess, companyId }: { onClose: () => void, o
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+      <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl transition-colors">
+        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10 transition-colors">
           <h2 className="text-xl font-bold">Nuevo Cliente</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -502,10 +502,10 @@ function ClientModal({ onClose, onSuccess, companyId }: { onClose: () => void, o
           </div>
 
           <div className="pt-4 flex gap-3">
-            <button type="button" onClick={onClose} className="flex-1 py-3 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors">
+            <button type="button" onClick={onClose} className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors">
               Cancelar
             </button>
-            <button type="submit" disabled={loading} className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+            <button type="submit" disabled={loading} className="flex-1 py-3 bg-blue-600 dark:bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 dark:hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
               {loading && <Loader2 size={18} className="animate-spin" />}
               Guardar Cliente
             </button>
@@ -518,7 +518,7 @@ function ClientModal({ onClose, onSuccess, companyId }: { onClose: () => void, o
 
 const FormField = ({ label, error, children }: any) => (
   <div className="space-y-1">
-    <label className="block text-sm font-medium text-gray-700">{label}</label>
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
     {children}
     {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
