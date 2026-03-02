@@ -525,12 +525,22 @@ const FormField = ({ label, error, children }: any) => (
   </div>
 );
 
+import { inviteUser } from '@/app/actions/invitations';
+
 function SettingsView({ profile }: { profile: any }) {
   const [activeSettingsTab, setActiveSettingsTab] = useState('company');
   const [loading, setLoading] = useState(false);
   const [company, setCompany] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
   const { register, handleSubmit, setValue, formState: { errors } } = useForm();
+  
+  // Invitation Modal State
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteLink, setInviteLink] = useState('');
+  const [inviteMethod, setInviteMethod] = useState<'whatsapp' | 'email' | null>(null);
+  
+  const { register: registerInvite, handleSubmit: handleSubmitInvite, reset: resetInvite, formState: { errors: inviteErrors } } = useForm();
 
   useEffect(() => {
     async function fetchData() {
@@ -582,6 +592,36 @@ function SettingsView({ profile }: { profile: any }) {
     setLoading(false);
   };
 
+  const onInviteUser = async (data: any) => {
+    setInviteLoading(true);
+    const result = await inviteUser(data.email, data.role, profile.company_id);
+    
+    if (result.success && result.inviteLink) {
+      setInviteLink(result.inviteLink);
+      
+      if (inviteMethod === 'whatsapp') {
+        const message = `Hola, te invito a unirte a ${company?.name || 'nuestro equipo'} en Dapp WiFi. Haz clic aquí para registrarte: ${result.inviteLink}`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+      }
+    } else {
+      alert('Error al crear invitación: ' + result.error);
+    }
+    setInviteLoading(false);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(inviteLink);
+    alert('Enlace copiado al portapapeles');
+  };
+
+  const closeInviteModal = () => {
+    setIsInviteModalOpen(false);
+    setInviteLink('');
+    setInviteMethod(null);
+    resetInvite();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 pb-2">
@@ -627,11 +667,116 @@ function SettingsView({ profile }: { profile: any }) {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Miembros del Equipo</h3>
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              onClick={() => setIsInviteModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
               <Plus size={18} />
               Invitar Miembro
             </button>
           </div>
+          
+          {/* Invite Modal */}
+          {isInviteModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-700">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Invitar Nuevo Miembro</h3>
+                  <button onClick={closeInviteModal} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <X size={24} />
+                  </button>
+                </div>
+                
+                <div className="p-6">
+                  {!inviteLink ? (
+                    <form onSubmit={handleSubmitInvite(onInviteUser)} className="space-y-4">
+                      <FormField label="Correo Electrónico del Invitado" error={inviteErrors.email?.message as string}>
+                        <input 
+                          {...registerInvite('email', { 
+                            required: 'El correo es obligatorio',
+                            pattern: { value: /^\S+@\S+$/i, message: 'Correo inválido' }
+                          })} 
+                          className="form-input-dapp w-full" 
+                          placeholder="usuario@ejemplo.com"
+                        />
+                      </FormField>
+                      
+                      <FormField label="Rol Asignado">
+                        <select {...registerInvite('role')} className="form-input-dapp w-full">
+                          <option value="tecnico">Técnico</option>
+                          <option value="cobrador">Cobrador</option>
+                          <option value="admin">Administrador</option>
+                        </select>
+                      </FormField>
+
+                      <div className="grid grid-cols-2 gap-4 pt-4">
+                        <button 
+                          type="submit" 
+                          onClick={() => setInviteMethod('whatsapp')}
+                          disabled={inviteLoading}
+                          className="flex flex-col items-center justify-center gap-2 p-4 border border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors text-green-700 dark:text-green-400"
+                        >
+                          <MessageSquare size={24} />
+                          <span className="font-medium">Vía WhatsApp</span>
+                        </button>
+                        
+                        <button 
+                          type="submit"
+                          onClick={() => setInviteMethod('email')}
+                          disabled={inviteLoading}
+                          className="flex flex-col items-center justify-center gap-2 p-4 border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-blue-700 dark:text-blue-400"
+                        >
+                          <Send size={24} />
+                          <span className="font-medium">Vía Email</span>
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="space-y-6 text-center">
+                      <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto text-green-600 dark:text-green-400">
+                        <CheckCircle2 size={32} />
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-white">¡Invitación Generada!</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Comparte este enlace con el nuevo miembro</p>
+                      </div>
+                      
+                      <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg break-all text-sm font-mono text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                        {inviteLink}
+                      </div>
+                      
+                      <div className="flex gap-3">
+                        <button 
+                          onClick={copyToClipboard}
+                          className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          Copiar Enlace
+                        </button>
+                        {inviteMethod === 'whatsapp' && (
+                          <a 
+                            href={`https://wa.me/?text=${encodeURIComponent(`Hola, te invito a unirte a ${company?.name} en Dapp WiFi. Haz clic aquí: ${inviteLink}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <MessageSquare size={18} />
+                            WhatsApp
+                          </a>
+                        )}
+                      </div>
+                      
+                      <button 
+                        onClick={closeInviteModal}
+                        className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
+                      >
+                        Cerrar y volver
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {members.map(member => (
