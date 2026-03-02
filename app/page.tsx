@@ -167,7 +167,7 @@ function ReportsView() {
           if (c.status === 'Activo') acc.active++;
           if (c.status === 'En Mora') acc.mora++;
           if (c.status === 'Cortado') acc.cut++;
-          if (c.status === 'Activo') acc.revenue += Number(c.monthly_amount || 0);
+          if (c.status === 'Activo' && c.monthly_amount) acc.revenue += Number(c.monthly_amount || 0);
           return acc;
         }, { active: 0, mora: 0, cut: 0, revenue: 0 });
         setStats(s);
