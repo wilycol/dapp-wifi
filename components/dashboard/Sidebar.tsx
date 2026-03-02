@@ -4,7 +4,8 @@ import {
   Wrench, 
   MessageSquare, 
   LayoutDashboard, 
-  LogOut
+  LogOut,
+  Settings
 } from 'lucide-react';
 import Image from 'next/image';
 import { NavItem } from '../ui/NavItem';
@@ -69,6 +70,14 @@ export function Sidebar({
           active={activeTab === 'support'} 
           onClick={() => { setActiveTab('support'); setIsSidebarOpen(false); }} 
         />
+        {['admin', 'superadmin'].includes(profile?.role?.toLowerCase()) && (
+          <NavItem 
+            icon={<Settings size={20} />} 
+            label="Configuración" 
+            active={activeTab === 'settings'} 
+            onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }} 
+          />
+        )}
       </nav>
 
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">

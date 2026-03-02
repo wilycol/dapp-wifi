@@ -9,8 +9,8 @@ export interface NavItemProps {
 
 export const NavItem = ({ icon, label, active, onClick }: NavItemProps) => {
   const activeClass = active
-    ? 'bg-blue-50 text-blue-700'
-    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900';
+    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white';
 
   return (
     <button
