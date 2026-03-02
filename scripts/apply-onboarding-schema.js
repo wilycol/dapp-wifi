@@ -17,6 +17,7 @@ async function applySchema() {
       ADD COLUMN IF NOT EXISTS email text,
       ADD COLUMN IF NOT EXISTS website text,
       ADD COLUMN IF NOT EXISTS logo_url text,
+      ADD COLUMN IF NOT EXISTS subscription_plan text DEFAULT 'free',
       ADD COLUMN IF NOT EXISTS currency text DEFAULT 'USD';
     `);
 

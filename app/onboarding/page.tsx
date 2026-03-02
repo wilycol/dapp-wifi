@@ -121,7 +121,8 @@ export default function Onboarding() {
           email: data.email,
           currency: data.currency,
           logo_url: logoUrl,
-          subscription_plan: 'Free' // Default plan
+          subscription_plan: 'Free', // Default plan
+          owner_id: user.id
         }])
         .select()
         .single();
