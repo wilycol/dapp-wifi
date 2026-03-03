@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { NavItem } from '../ui/NavItem';
+import { toast } from 'sonner';
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -27,6 +28,16 @@ export function Sidebar({
   profile, 
   handleLogout 
 }: SidebarProps) {
+  const handleNavigation = (tab: string, allowedRoles: string[]) => {
+    const userRole = profile?.role?.toLowerCase();
+    if (allowedRoles.includes(userRole)) {
+      setActiveTab(tab);
+      setIsSidebarOpen(false);
+    } else {
+      toast.error('No tienes suficientes privilegios para ver esta información.');
+    }
+  };
+
   return (
     <aside className={`
       fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
@@ -40,44 +51,40 @@ export function Sidebar({
       </div>
       
       <nav className="flex-1 px-4 space-y-1">
-        {['admin', 'superadmin', 'cobros'].includes(profile?.role?.toLowerCase()) && (
-          <NavItem 
-            icon={<LayoutDashboard size={20} />} 
-            label="Dashboard" 
-            active={activeTab === 'dashboard'} 
-            onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }} 
-          />
-        )}
-        {['admin', 'superadmin', 'cobros'].includes(profile?.role?.toLowerCase()) && (
-          <NavItem 
-            icon={<Users size={20} />} 
-            label="Clientes" 
-            active={activeTab === 'clients'} 
-            onClick={() => { setActiveTab('clients'); setIsSidebarOpen(false); }} 
-          />
-        )}
-        {['admin', 'superadmin'].includes(profile?.role?.toLowerCase()) && (
-          <NavItem 
-            icon={<Wrench size={20} />} 
-            label="Instaladores" 
-            active={activeTab === 'installers'} 
-            onClick={() => { setActiveTab('installers'); setIsSidebarOpen(false); }} 
-          />
-        )}
+        <NavItem 
+          icon={<LayoutDashboard size={20} />} 
+          label="Dashboard" 
+          active={activeTab === 'dashboard'} 
+          onClick={() => handleNavigation('dashboard', ['admin', 'superadmin', 'cobros'])} 
+        />
+        
+        <NavItem 
+          icon={<Users size={20} />} 
+          label="Clientes" 
+          active={activeTab === 'clients'} 
+          onClick={() => handleNavigation('clients', ['admin', 'superadmin', 'cobros'])} 
+        />
+        
+        <NavItem 
+          icon={<Wrench size={20} />} 
+          label="Operaciones" 
+          active={activeTab === 'installers'} 
+          onClick={() => handleNavigation('installers', ['admin', 'superadmin'])} 
+        />
+        
         <NavItem 
           icon={<MessageSquare size={20} />} 
           label="Soporte" 
           active={activeTab === 'support'} 
           onClick={() => { setActiveTab('support'); setIsSidebarOpen(false); }} 
         />
-        {['admin', 'superadmin'].includes(profile?.role?.toLowerCase()) && (
-          <NavItem 
-            icon={<Settings size={20} />} 
-            label="Configuración" 
-            active={activeTab === 'settings'} 
-            onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }} 
-          />
-        )}
+        
+        <NavItem 
+          icon={<Settings size={20} />} 
+          label="Configuración" 
+          active={activeTab === 'settings'} 
+          onClick={() => handleNavigation('settings', ['admin', 'superadmin'])} 
+        />
       </nav>
 
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">

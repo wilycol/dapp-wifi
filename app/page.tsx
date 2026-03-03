@@ -138,11 +138,6 @@ export default function Dashboard() {
   );
 
   const renderContent = () => {
-    // Role-based access control
-    if (profile?.role?.toLowerCase() === 'tecnico') {
-      return <SupportView />; 
-    }
-
     switch (activeTab) {
       case 'dashboard': return <ReportsView />;
       case 'clients': return <ClientsView role={profile?.role} />;

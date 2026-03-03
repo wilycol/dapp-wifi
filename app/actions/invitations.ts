@@ -139,8 +139,31 @@ export async function acceptInvitation(inviteId: string, userId: string, userEma
     return { success: false, error: 'Esta invitación ya fue usada' };
   }
   
-  // Verificar que el email coincida (opcional, pero recomendado)
-  // if (invite.email !== userEmail) ...
+  // 1.5 Validaciones de seguridad
+  
+  // A. Verificar que el email coincida
+  if (userEmail && invite.email && userEmail.toLowerCase() !== invite.email.toLowerCase()) {
+     return { success: false, error: `Esta invitación fue enviada a ${invite.email}, pero estás conectado como ${userEmail}. Por favor cierra sesión e ingresa con la cuenta correcta.` };
+  }
+
+  // B. Verificar que no sea el dueño o admin degradándose
+  const { data: currentProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (currentProfile) {
+    if (currentProfile.company_id === invite.company_id) {
+        if (currentProfile.role === 'SuperAdmin' || currentProfile.role === 'Admin') {
+            return { success: false, error: 'Ya eres Administrador de esta empresa. No necesitas aceptar una invitación.' };
+        }
+        // Si ya es miembro con otro rol, permitimos actualizar? Depende. Por seguridad mejor bloquear.
+        return { success: false, error: 'Ya eres miembro de esta empresa.' };
+    }
+    // Si es de OTRA empresa, al aceptar se cambiará de empresa (lo cual es destructivo para su empresa anterior si era el único dueño).
+    // Por ahora solo protegemos el caso de auto-invitación destructiva.
+  }
   
   // 2. Actualizar el perfil del usuario con company_id y role (usando admin para saltar RLS si es necesario)
   const { error: updateProfileError } = await supabaseAdmin

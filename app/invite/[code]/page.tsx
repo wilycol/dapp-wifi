@@ -57,10 +57,10 @@ export default function InvitePage() {
 
     if (result.success) {
       setSuccess(true);
-      // Redirigir al dashboard después de unos segundos
+      // Redirigir al dashboard forzando recarga para actualizar permisos
       setTimeout(() => {
-        router.push('/');
-      }, 3000);
+        window.location.href = '/';
+      }, 2000);
     } else {
       setError(result.error as string);
     }
