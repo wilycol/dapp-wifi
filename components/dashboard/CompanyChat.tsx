@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Send, X, Reply, Ticket, CheckSquare, AlertCircle, User, Paperclip, Plus, HelpCircle } from 'lucide-react';
+import { Send, X, Reply, Ticket, CheckSquare, AlertCircle, User, Paperclip, Plus, HelpCircle, Check, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { getCompanyMembers } from '@/app/actions/get-members';
 
@@ -14,6 +14,7 @@ interface Message {
   reply_to_id?: string | null;
   message_type?: 'text' | 'ticket_assignment' | 'ticket_resolution' | 'ticket_created';
   metadata?: any;
+  read_by?: string[]; // Array of user IDs who read the message
 }
 
 interface CompanyChatProps {
@@ -107,6 +108,22 @@ export default function CompanyChat({ profile, onClose }: CompanyChatProps) {
       )
       .subscribe();
 
+    // 4. Mark messages as read
+    const markRead = async () => {
+      if (!profile.company_id || !profile.id) return;
+      
+      const { error } = await supabase.rpc('mark_messages_read', {
+        p_company_id: profile.company_id,
+        p_user_id: profile.id
+      });
+
+      if (error) console.error('Error marking messages as read:', error);
+    };
+
+    if (messages.length > 0) {
+      markRead();
+    }
+
     return () => {
       supabase.removeChannel(channel);
     };
@@ -160,6 +177,32 @@ export default function CompanyChat({ profile, onClose }: CompanyChatProps) {
       toast.error('Error al enviar mensaje');
       setNewMessage(msg); // Restore if failed
       setReplyingTo(currentReply);
+    } else {
+      // 2. Handle Mentions Notification
+      const mentionedUsers = membersList.filter(m => 
+        msg.includes(`@${m.full_name}`) || (m.email && msg.includes(`@${m.email}`))
+      );
+      
+      if (mentionedUsers.length > 0) {
+        const notifications = mentionedUsers
+          .filter(u => u.id !== profile.id) // Don't notify self
+          .map(user => ({
+            user_id: user.id,
+            title: 'Mención en el Chat',
+            message: `${profile.full_name || 'Un compañero'} te mencionó: "${msg.length > 50 ? msg.substring(0, 50) + '...' : msg}"`,
+            type: 'info',
+            read: false,
+            metadata: { 
+              type: 'mention',
+              sender_id: profile.id,
+              sender_name: profile.full_name
+            }
+          }));
+
+        if (notifications.length > 0) {
+            await supabase.from('notifications' as any).insert(notifications);
+        }
+      }
     }
   };
 
@@ -308,6 +351,11 @@ export default function CompanyChat({ profile, onClose }: CompanyChatProps) {
       return;
     }
 
+    if (!profile.company_id) {
+      toast.error('Error de sesión: No se encontró la empresa');
+      return;
+    }
+
     // 1. Create ticket
     const { data: ticket, error: ticketError } = await supabase
       .from('support_tickets')
@@ -315,9 +363,6 @@ export default function CompanyChat({ profile, onClose }: CompanyChatProps) {
         issue: newTicketIssue,
         priority: newTicketPriority,
         status: 'Abierto',
-        // Assuming company_id is handled by RLS or trigger, 
-        // but if not, we should add it if the schema supports it.
-        // Based on migration, RLS policies use company_id column.
         company_id: profile.company_id 
       } as any)
       .select()
@@ -325,7 +370,7 @@ export default function CompanyChat({ profile, onClose }: CompanyChatProps) {
 
     if (ticketError) {
       console.error('Error creating ticket:', ticketError);
-      toast.error('Error al crear el ticket');
+      toast.error(`Error al crear ticket: ${ticketError.message}`);
       return;
     }
 
@@ -565,8 +610,15 @@ export default function CompanyChat({ profile, onClose }: CompanyChatProps) {
                     )}
                   </p>
                   
-                  <div className={`text-[10px] mt-1 ${isMe ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'} text-right`}>
-                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <div className={`text-[10px] mt-1 ${isMe ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'} flex items-center justify-end gap-1`}>
+                    <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    {isMe && (
+                      msg.read_by && msg.read_by.length > 0 ? (
+                        <CheckCheck size={14} className="text-blue-200" />
+                      ) : (
+                        <Check size={14} className="text-blue-200/70" />
+                      )
+                    )}
                   </div>
                 </div>
               </div>
