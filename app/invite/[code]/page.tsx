@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getInvitation, acceptInvitation } from '@/app/actions/invitations';
 import { Loader2, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 
-export default function InvitePage({ params }: { params: { code: string } }) {
+export default function InvitePage() {
+  const params = useParams();
+  const code = params?.code as string;
   const router = useRouter();
   const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
@@ -21,12 +23,14 @@ export default function InvitePage({ params }: { params: { code: string } }) {
     const supabase = createClient();
 
     async function checkAuthAndInvite() {
+      if (!code) return;
+
       // 1. Verificar Usuario
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
 
       // 2. Obtener detalles de la invitación
-      const result = await getInvitation(params.code);
+      const result = await getInvitation(code);
       
       if (!result.success) {
         setError(result.error as string);
@@ -39,17 +43,17 @@ export default function InvitePage({ params }: { params: { code: string } }) {
     }
 
     checkAuthAndInvite();
-  }, [params.code]);
+  }, [code]);
 
   const handleAccept = async () => {
     if (!user) {
       // Redirigir a login con return URL
-      router.push(`/login?next=/invite/${params.code}`);
+      router.push(`/login?next=/invite/${code}`);
       return;
     }
 
     setLoading(true);
-    const result = await acceptInvitation(params.code, user.id, user.email);
+    const result = await acceptInvitation(code, user.id, user.email);
 
     if (result.success) {
       setSuccess(true);

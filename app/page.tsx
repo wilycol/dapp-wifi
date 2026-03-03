@@ -594,7 +594,8 @@ function SettingsView({ profile }: { profile: any }) {
 
   const onInviteUser = async (data: any) => {
     setInviteLoading(true);
-    const result = await inviteUser(data.email, data.role, profile.company_id);
+    // Pasamos true como cuarto argumento solo si el método es email
+    const result = await inviteUser(data.email, data.role, profile.company_id, inviteMethod === 'email');
     
     if (result.success && result.inviteLink) {
       setInviteLink(result.inviteLink);
@@ -603,6 +604,12 @@ function SettingsView({ profile }: { profile: any }) {
         const message = `Hola, te invito a unirte a ${company?.name || 'nuestro equipo'} en Dapp WiFi. Haz clic aquí para registrarte: ${result.inviteLink}`;
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
+      } else if (inviteMethod === 'email') {
+        if (result.warning) {
+          alert('Invitación creada, pero hubo un problema al enviar el correo: ' + result.warning);
+        } else {
+          // Éxito al enviar correo
+        }
       }
     } else {
       alert('Error al crear invitación: ' + result.error);

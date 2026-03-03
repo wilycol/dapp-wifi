@@ -10,7 +10,7 @@ export async function sendClientNotification(clientId: string, message: string) 
 
   const { data: client, error: clientError } = await supabase
     .from('clients')
-    .select('name, phone')
+    .select('full_name, phone')
     .eq('id', clientId)
     .single();
 
@@ -40,7 +40,7 @@ export async function sendClientNotification(clientId: string, message: string) 
     const result = await response.json();
     if (!response.ok) throw new Error(result.error?.message || 'Error en WhatsApp API');
 
-    return { success: true, recipient: client.name };
+    return { success: true, recipient: client.full_name };
   } catch (error: any) {
     console.error('WhatsApp Error:', error);
     return { success: false, error: error.message };
@@ -51,11 +51,11 @@ export async function notifyTicketUpdate(ticketId: string, status: string) {
   const supabase = await createClient();
   const { data: ticket } = await supabase
     .from('support_tickets')
-    .select('issue, client_id, clients(name)')
+    .select('issue, client_id, clients(full_name)')
     .eq('id', ticketId)
     .single();
 
   if (!ticket) return { success: false };
-  const message = `Hola ${ticket.clients?.name}, el estado de tu ticket "${ticket.issue}" es ahora: ${status}.`;
+  const message = `Hola ${ticket.clients?.full_name}, el estado de tu ticket "${ticket.issue}" es ahora: ${status}.`;
   return await sendClientNotification(ticket.client_id!, message);
 }

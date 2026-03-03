@@ -1,10 +1,4 @@
 {
-  "extends": [],
-  "parser": "@typescript-eslint/parser",
-  "plugins": [
-    "@typescript-eslint"
-  ],
-  "root": true,
   "rules": {
     "no-const-assign": "error",
     "no-obj-calls": "error",
@@ -13,14 +7,14 @@
     "constructor-super": "error",
     "no-this-before-super": "error",
     "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": "off",
-    "@typescript-eslint/no-explicit-any": "off",
+    "typescript/no-unused-vars": "off",
+    "typescript/no-explicit-any": "off",
     "react/no-unescaped-entities": "off",
     "prefer-const": "off",
     "no-useless-escape": "off",
-    "@typescript-eslint/no-wrapper-object-types": "off",
-    "@typescript-eslint/ban-ts-comment": "off",
-    "@typescript-eslint/no-unsafe-function-type": "off",
-    "@typescript-eslint/no-empty-object-type": "off"
+    "typescript/no-wrapper-object-types": "off",
+    "typescript/ban-ts-comment": "off",
+    "typescript/no-unsafe-function-type": "off",
+    "typescript/no-empty-object-type": "off"
   }
 }
