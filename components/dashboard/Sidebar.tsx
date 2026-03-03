@@ -89,9 +89,20 @@ export function Sidebar({
 
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-3 p-2 mb-2">
-          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold">
-            {profile?.role?.[0] || 'U'}
-          </div>
+          {profile?.avatar_url ? (
+            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700">
+              <img 
+                src={profile.avatar_url} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold">
+              {profile?.role?.[0] || 'U'}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate text-gray-900 dark:text-white">{profile?.email?.split('@')[0]}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{profile?.role}</p>

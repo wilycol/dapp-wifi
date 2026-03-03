@@ -114,7 +114,8 @@ export default function Dashboard() {
       // Merge user email if not in profile (for display purposes)
       const profileWithEmail = {
         ...profile,
-        email: profile?.email || user.email
+        email: profile?.email || user.email,
+        avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture
       };
       
       setProfile(profileWithEmail);
