@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Send } from 'lucide-react';
+import { Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { getCompanyMembers } from '@/app/actions/get-members';
 
@@ -15,9 +15,10 @@ interface Message {
 
 interface CompanyChatProps {
   profile: any;
+  onClose?: () => void;
 }
 
-export default function CompanyChat({ profile }: CompanyChatProps) {
+export default function CompanyChat({ profile, onClose }: CompanyChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [membersMap, setMembersMap] = useState<Record<string, string>>({});
@@ -112,11 +113,22 @@ export default function CompanyChat({ profile }: CompanyChatProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-200px)] min-h-[500px] bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-t-lg">
-        <h3 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-          Chat General del Equipo
-        </h3>
-        <p className="text-xs text-gray-500">Comunicación interna segura</p>
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 rounded-t-lg flex justify-between items-start">
+        <div>
+          <h3 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+            Chat General del Equipo
+          </h3>
+          <p className="text-xs text-gray-500">Comunicación interna segura</p>
+        </div>
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+            aria-label="Cerrar chat"
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* Messages Area */}

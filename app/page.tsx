@@ -80,7 +80,10 @@ export default function Dashboard() {
         setUser({ 
           id: adminUserId, 
           email: 'admin-test@example.com',
-          role: 'authenticated'
+          role: 'authenticated',
+          user_metadata: {
+            avatar_url: 'https://lh3.googleusercontent.com/a/ACg8ocL-...' // Mock url or empty to test fallback
+          }
         });
         
         setProfile({
@@ -90,7 +93,8 @@ export default function Dashboard() {
           company_id: adminCompanyId,
           first_name: 'User A',
           last_name: 'Test',
-          full_name: 'User A Test'
+          full_name: 'User A Test',
+          avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix' // Avatar de prueba para verificar visualización
         });
         setCompanyName('Dapp WiFi (Dev Mode)');
         setLoading(false);
@@ -495,7 +499,7 @@ function InstallersView({ profile }: { profile: any }) {
           })}
         </div>
       ) : (
-        <CompanyChat profile={profile} />
+        <CompanyChat profile={profile} onClose={() => setSubTab('list')} />
       )}
     </div>
   );
