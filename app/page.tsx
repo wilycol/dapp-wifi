@@ -29,6 +29,7 @@ import * as z from 'zod';
 import { createClient } from '@/lib/supabase/client';
 import { Tables } from '@/database.types';
 import { sendClientNotification, notifyTicketUpdate } from '@/app/actions/messaging';
+import { inviteUser } from '@/app/actions/invitations';
 import { StatCard } from '@/components/ui/StatCard';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Header } from '@/components/dashboard/Header';
@@ -525,8 +526,6 @@ const FormField = ({ label, error, children }: any) => (
   </div>
 );
 
-import { inviteUser } from '@/app/actions/invitations';
-
 function SettingsView({ profile }: { profile: any }) {
   const [activeSettingsTab, setActiveSettingsTab] = useState('company');
   const [loading, setLoading] = useState(false);
@@ -592,19 +591,21 @@ function SettingsView({ profile }: { profile: any }) {
     setLoading(false);
   };
 
-  const onInviteUser = async (data: any) => {
+  const onInviteUser = async (data: any, method: 'whatsapp' | 'email') => {
     setInviteLoading(true);
+    setInviteMethod(method);
+    
     // Pasamos true como cuarto argumento solo si el método es email
-    const result = await inviteUser(data.email, data.role, profile.company_id, inviteMethod === 'email');
+    const result = await inviteUser(data.email, data.role, profile.company_id, method === 'email');
     
     if (result.success && result.inviteLink) {
       setInviteLink(result.inviteLink);
       
-      if (inviteMethod === 'whatsapp') {
+      if (method === 'whatsapp') {
         const message = `Hola, te invito a unirte a ${company?.name || 'nuestro equipo'} en Dapp WiFi. Haz clic aquí para registrarte: ${result.inviteLink}`;
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
-      } else if (inviteMethod === 'email') {
+      } else if (method === 'email') {
         if (result.warning) {
           alert('Invitación creada, pero hubo un problema al enviar el correo: ' + result.warning);
         } else {
@@ -696,7 +697,7 @@ function SettingsView({ profile }: { profile: any }) {
                 
                 <div className="p-6">
                   {!inviteLink ? (
-                    <form onSubmit={handleSubmitInvite(onInviteUser)} className="space-y-4">
+                    <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
                       <FormField label="Correo Electrónico del Invitado" error={inviteErrors.email?.message as string}>
                         <input 
                           {...registerInvite('email', { 
@@ -718,8 +719,8 @@ function SettingsView({ profile }: { profile: any }) {
 
                       <div className="grid grid-cols-2 gap-4 pt-4">
                         <button 
-                          type="submit" 
-                          onClick={() => setInviteMethod('whatsapp')}
+                          type="button" 
+                          onClick={handleSubmitInvite((data) => onInviteUser(data, 'whatsapp'))}
                           disabled={inviteLoading}
                           className="flex flex-col items-center justify-center gap-2 p-4 border border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800 rounded-xl hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors text-green-700 dark:text-green-400"
                         >
@@ -728,8 +729,8 @@ function SettingsView({ profile }: { profile: any }) {
                         </button>
                         
                         <button 
-                          type="submit"
-                          onClick={() => setInviteMethod('email')}
+                          type="button"
+                          onClick={handleSubmitInvite((data) => onInviteUser(data, 'email'))}
                           disabled={inviteLoading}
                           className="flex flex-col items-center justify-center gap-2 p-4 border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-blue-700 dark:text-blue-400"
                         >
