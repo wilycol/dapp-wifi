@@ -606,7 +606,7 @@ function SettingsView({ profile }: { profile: any }) {
         // Fetch Members
         const result = await getCompanyMembers(profile.company_id);
         if (result.success) {
-          setMembers(result.members);
+          setMembers(result.members || []);
         } else {
           console.error('Error fetching members:', result.error);
         }
