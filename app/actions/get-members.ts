@@ -68,5 +68,14 @@ export async function getCompanyMembers(companyId: string) {
     };
   }));
 
-  return { success: true, members: enrichedMembers };
+  // 5. Filter sensitive roles
+  // If current user is NOT superadmin, hide superadmin members
+  const filteredMembers = enrichedMembers.filter((member: any) => {
+    if (currentUserProfile.role?.toLowerCase() !== 'superadmin') {
+      return member.role?.toLowerCase() !== 'superadmin';
+    }
+    return true;
+  });
+
+  return { success: true, members: filteredMembers };
 }

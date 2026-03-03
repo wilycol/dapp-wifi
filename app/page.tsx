@@ -362,15 +362,62 @@ function InstallersView({ profile }: { profile: any }) {
   const [subTab, setSubTab] = useState<'list' | 'chat'>('list');
   const [installers, setInstallers] = useState<Tables<'installers'>[]>([]);
   const [loading, setLoading] = useState(true);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function fetch() {
+      if (!profile?.company_id) return;
+
+      // 1. Get allowed members (security filter applied on server)
+      const membersResult = await getCompanyMembers(profile.company_id);
+      let allowedIds = new Set<string>();
+      
+      if (membersResult.success && membersResult.members) {
+        membersResult.members.forEach((m: any) => allowedIds.add(m.id));
+      }
+
+      // 2. Fetch installers data
       const { data } = await supabase.from('installers').select('*');
-      if (data) setInstallers(data);
+      
+      if (data) {
+        // 3. Filter out installers that are not in the allowed members list (hides SuperAdmin)
+        const filtered = data.filter(i => allowedIds.has(i.id));
+        setInstallers(filtered);
+      }
       setLoading(false);
     }
     fetch();
-  }, []);
+
+    // Realtime Presence Logic
+    if (profile?.id && profile?.company_id) {
+      const channel = supabase.channel(`presence:${profile.company_id}`, {
+        config: {
+          presence: {
+            key: profile.id,
+          },
+        },
+      });
+
+      channel
+        .on('presence', { event: 'sync' }, () => {
+          const newState = channel.presenceState();
+          const onlineIds = new Set(Object.keys(newState));
+          setOnlineUsers(onlineIds);
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.track({ 
+              online_at: new Date().toISOString(),
+              user_id: profile.id 
+            });
+          }
+        });
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [profile]);
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-blue-600" /></div>;
 
@@ -402,25 +449,49 @@ function InstallersView({ profile }: { profile: any }) {
 
       {subTab === 'list' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {installers.map(installer => (
-            <div key={installer.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-lg">
-                  {installer.name[0]}
+          {installers.map(installer => {
+            const isOnline = onlineUsers.has(installer.id);
+            return (
+              <div key={installer.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors relative overflow-hidden">
+                {/* Connection Status Indicator Line */}
+                <div className={`absolute top-0 left-0 w-full h-1 ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
+                
+                <div className="flex justify-between items-start mb-4 mt-2">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-lg">
+                      {installer.name[0]}
+                    </div>
+                    {/* Online Dot */}
+                    <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${
+                      isOnline ? 'bg-green-500' : 'bg-red-500'
+                    }`}></span>
+                  </div>
+                  
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    installer.status === 'Disponible' 
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
+                      : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                  }`}>
+                    {installer.status}
+                  </span>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  installer.status === 'Disponible' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
-                }`}>
-                  {installer.status}
-                </span>
+                
+                <div className="mb-1">
+                  <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    {installer.name}
+                  </h3>
+                  <p className={`text-xs font-medium ${isOnline ? 'text-green-600' : 'text-red-500'}`}>
+                    {isOnline ? '● Conectado' : '○ Desconectado'}
+                  </p>
+                </div>
+
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{installer.phone || 'Sin teléfono'}</p>
+                <button className="w-full py-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors">
+                  Asignar Tarea
+                </button>
               </div>
-              <h3 className="font-bold text-gray-900 dark:text-white">{installer.name}</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{installer.phone}</p>
-              <button className="w-full py-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors">
-                Asignar Tarea
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <CompanyChat profile={profile} />
