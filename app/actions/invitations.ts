@@ -89,11 +89,17 @@ export async function inviteUser(email: string, role: string, companyId: string,
   return { success: true, inviteLink, inviteId: data.id };
 }
 
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
 /**
  * Obtiene los detalles de una invitación por su ID
  */
 export async function getInvitation(inviteId: string) {
-  const supabase = await createClient();
+  // Usamos el cliente admin para poder leer la invitación incluso si el usuario no está logueado
+  const supabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
   
   const { data, error } = await supabase
     .from('company_invites')
@@ -112,10 +118,14 @@ export async function getInvitation(inviteId: string) {
  * Acepta una invitación
  */
 export async function acceptInvitation(inviteId: string, userId: string, userEmail: string) {
-  const supabase = await createClient();
+  const supabase = await createClient(); // Cliente del usuario autenticado
+  const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
   
-  // 1. Obtener invitación
-  const { data: invite, error: fetchError } = await supabase
+  // 1. Obtener invitación (como admin, por si acaso)
+  const { data: invite, error: fetchError } = await supabaseAdmin
     .from('company_invites')
     .select('*')
     .eq('id', inviteId)
@@ -132,8 +142,8 @@ export async function acceptInvitation(inviteId: string, userId: string, userEma
   // Verificar que el email coincida (opcional, pero recomendado)
   // if (invite.email !== userEmail) ...
   
-  // 2. Actualizar el perfil del usuario con company_id y role
-  const { error: updateProfileError } = await supabase
+  // 2. Actualizar el perfil del usuario con company_id y role (usando admin para saltar RLS si es necesario)
+  const { error: updateProfileError } = await supabaseAdmin
     .from('profiles')
     .update({
       company_id: invite.company_id,
@@ -142,11 +152,12 @@ export async function acceptInvitation(inviteId: string, userId: string, userEma
     .eq('id', userId);
     
   if (updateProfileError) {
+    console.error('Error actualizando perfil:', updateProfileError);
     return { success: false, error: 'Error al actualizar perfil' };
   }
   
   // 3. Marcar invitación como aceptada
-  await supabase
+  await supabaseAdmin
     .from('company_invites')
     .update({ status: 'accepted' })
     .eq('id', inviteId);
