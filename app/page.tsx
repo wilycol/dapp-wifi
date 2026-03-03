@@ -30,9 +30,11 @@ import { createClient } from '@/lib/supabase/client';
 import { Tables } from '@/database.types';
 import { sendClientNotification, notifyTicketUpdate } from '@/app/actions/messaging';
 import { inviteUser } from '@/app/actions/invitations';
+import { getCompanyMembers } from '@/app/actions/get-members';
 import { StatCard } from '@/components/ui/StatCard';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 import { Header } from '@/components/dashboard/Header';
+import CompanyChat from '@/components/dashboard/CompanyChat';
 
 const supabase = createClient();
 
@@ -58,6 +60,7 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -89,6 +92,7 @@ export default function Dashboard() {
           last_name: 'Test',
           full_name: 'User A Test'
         });
+        setCompanyName('Dapp WiFi (Dev Mode)');
         setLoading(false);
         return;
       }
@@ -120,6 +124,19 @@ export default function Dashboard() {
         router.push('/onboarding');
         return;
       }
+
+      // Fetch Company Name
+      if (profileWithEmail?.company_id) {
+        const { data: companyData } = await supabase
+          .from('companies')
+          .select('name')
+          .eq('id', profileWithEmail.company_id)
+          .single();
+        
+        if (companyData) {
+          setCompanyName(companyData.name);
+        }
+      }
       
       setLoading(false);
     }
@@ -141,7 +158,7 @@ export default function Dashboard() {
     switch (activeTab) {
       case 'dashboard': return <ReportsView />;
       case 'clients': return <ClientsView role={profile?.role} />;
-      case 'installers': return <InstallersView />;
+      case 'installers': return <InstallersView profile={profile} />;
       case 'support': return <SupportView />;
       case 'settings': return <SettingsView profile={profile} />;
       default: return <ReportsView />;
@@ -169,6 +186,7 @@ export default function Dashboard() {
           activeTab={activeTab}
           profile={profile}
           setIsModalOpen={setIsModalOpen}
+          companyName={companyName}
         />
 
         {/* View Content */}
@@ -340,7 +358,8 @@ function ClientsView({ role }: { role: string }) {
   );
 }
 
-function InstallersView() {
+function InstallersView({ profile }: { profile: any }) {
+  const [subTab, setSubTab] = useState<'list' | 'chat'>('list');
   const [installers, setInstallers] = useState<Tables<'installers'>[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -356,26 +375,56 @@ function InstallersView() {
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-blue-600" /></div>;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {installers.map(installer => (
-        <div key={installer.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
-          <div className="flex justify-between items-start mb-4">
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-lg">
-              {installer.name[0]}
+    <div className="space-y-6">
+      {/* Tabs */}
+      <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
+        <button
+          onClick={() => setSubTab('list')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            subTab === 'list'
+              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          }`}
+        >
+          Integrantes Del equipo
+        </button>
+        <button
+          onClick={() => setSubTab('chat')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            subTab === 'chat'
+              ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+          }`}
+        >
+          Chat de Equipo
+        </button>
+      </div>
+
+      {subTab === 'list' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {installers.map(installer => (
+            <div key={installer.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-lg">
+                  {installer.name[0]}
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  installer.status === 'Disponible' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                }`}>
+                  {installer.status}
+                </span>
+              </div>
+              <h3 className="font-bold text-gray-900 dark:text-white">{installer.name}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{installer.phone}</p>
+              <button className="w-full py-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors">
+                Asignar Tarea
+              </button>
             </div>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              installer.status === 'Disponible' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
-            }`}>
-              {installer.status}
-            </span>
-          </div>
-          <h3 className="font-bold text-gray-900 dark:text-white">{installer.name}</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{installer.phone}</p>
-          <button className="w-full py-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors">
-            Asignar Tarea
-          </button>
+          ))}
         </div>
-      ))}
+      ) : (
+        <CompanyChat profile={profile} />
+      )}
     </div>
   );
 }
@@ -555,12 +604,12 @@ function SettingsView({ profile }: { profile: any }) {
         }
 
         // Fetch Members
-        const { data: membersData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('company_id', profile.company_id);
-        
-        if (membersData) setMembers(membersData);
+        const result = await getCompanyMembers(profile.company_id);
+        if (result.success) {
+          setMembers(result.members);
+        } else {
+          console.error('Error fetching members:', result.error);
+        }
       }
     }
     fetchData();
