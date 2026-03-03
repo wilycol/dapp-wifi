@@ -34,7 +34,7 @@ export function Sidebar({
       setActiveTab(tab);
       setIsSidebarOpen(false);
     } else {
-      toast.error('No tienes suficientes privilegios para ver esta información.');
+      toast.error(`No tienes suficientes privilegios. Tu rol es: ${userRole || 'Desconocido'}`);
     }
   };
 
@@ -55,21 +55,21 @@ export function Sidebar({
           icon={<LayoutDashboard size={20} />} 
           label="Dashboard" 
           active={activeTab === 'dashboard'} 
-          onClick={() => handleNavigation('dashboard', ['admin', 'superadmin', 'cobros'])} 
+          onClick={() => handleNavigation('dashboard', ['admin', 'superadmin', 'cobros', 'cobrador'])} 
         />
         
         <NavItem 
           icon={<Users size={20} />} 
           label="Clientes" 
           active={activeTab === 'clients'} 
-          onClick={() => handleNavigation('clients', ['admin', 'superadmin', 'cobros'])} 
+          onClick={() => handleNavigation('clients', ['admin', 'superadmin', 'cobros', 'cobrador'])} 
         />
         
         <NavItem 
           icon={<Wrench size={20} />} 
           label="Operaciones" 
           active={activeTab === 'installers'} 
-          onClick={() => handleNavigation('installers', ['admin', 'superadmin'])} 
+          onClick={() => handleNavigation('installers', ['admin', 'superadmin', 'tecnico', 'cobrador', 'cobros'])} 
         />
         
         <NavItem 

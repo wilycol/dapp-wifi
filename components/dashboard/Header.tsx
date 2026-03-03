@@ -14,6 +14,7 @@ interface HeaderProps {
   activeTab: string;
   profile: any;
   setIsModalOpen: (isOpen: boolean) => void;
+  companyName?: string;
 }
 
 export function Header({ 
@@ -21,7 +22,8 @@ export function Header({
   setIsSidebarOpen, 
   activeTab, 
   profile, 
-  setIsModalOpen 
+  setIsModalOpen,
+  companyName
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -34,7 +36,18 @@ export function Header({
         >
           {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
-        <h1 className="text-xl font-semibold capitalize text-gray-900 dark:text-white">{activeTab}</h1>
+        <div className="flex flex-col">
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+            {companyName || 'Dapp WiFi'}
+          </h1>
+          <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+            {activeTab === 'dashboard' ? 'Panel Principal' :
+             activeTab === 'clients' ? 'Clientes' :
+             activeTab === 'installers' ? 'Operaciones' :
+             activeTab === 'support' ? 'Soporte' :
+             activeTab === 'settings' ? 'Configuración' : activeTab}
+          </span>
+        </div>
       </div>
       <div className="flex items-center gap-2 lg:gap-4">
         <ThemeToggle />
